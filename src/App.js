@@ -97,6 +97,67 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [loginError, setLoginError] = useState('');
+  const [openNotice, setOpenNotice] = useState(null);
+  const [noticesOpen, setNoticesOpen] = useState(false);
+  const [selectedNoticeId, setSelectedNoticeId] = useState(null);
+
+  // Assign Posting form state
+  const [postingLetterNo, setPostingLetterNo] = useState('');
+  const [district, setDistrict] = useState('');
+  const [tehsil, setTehsil] = useState('');
+  const [hospital, setHospital] = useState('');
+  const [issueDate, setIssueDate] = useState('');
+  const [joiningLetterNo, setJoiningLetterNo] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [bondNotCompleted, setBondNotCompleted] = useState(true);
+  const [noticeLetterNo, setNoticeLetterNo] = useState('');
+  const [noticeDate, setNoticeDate] = useState('');
+  const [postings, setPostings] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [showAssignForm, setShowAssignForm] = useState(false);
+
+  const handleAssignCancel = () => {
+    setPostingLetterNo('');
+    setDistrict('');
+    setTehsil('');
+    setHospital('');
+    setIssueDate('');
+    setJoiningLetterNo('');
+    setStartDate('');
+    setEndDate('');
+    setBondNotCompleted(true);
+    setNoticeLetterNo('');
+    setNoticeDate('');
+    setEditingId(null);
+    setShowAssignForm(false);
+  };
+
+  const handleAssignSave = () => {
+    const payload = {
+      postingLetterNo,
+      district,
+      tehsil,
+      hospital,
+      issueDate,
+      joiningLetterNo,
+      startDate,
+      endDate,
+      bondNotCompleted,
+      noticeLetterNo,
+      noticeDate,
+    };
+    if (editingId) {
+      setPostings((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p)));
+    } else {
+      const newItem = { id: Date.now(), ...payload };
+      setPostings((prev) => [newItem, ...prev]);
+    }
+    console.log('Assign Posting saved:', payload);
+    // after save show list
+    setShowAssignForm(false);
+    handleAssignCancel();
+  };
 
   // Login Form State
   const [email, setEmail] = useState('');
@@ -415,10 +476,46 @@ export default function App() {
             </>
           )}
 
+          <div className="px-2">
+            <button
+              onClick={() => {
+                setNoticesOpen(!noticesOpen);
+                setActiveTab('NOTICES');
+                if (window.innerWidth < 768) setSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all mb-1
+                ${activeTab === 'NOTICES' && !noticesOpen ? 'bg-white/10 text-white border-l-4 border-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Bell size={18} />
+              <span className="font-medium text-sm">Notices & Circulars</span>
+              <ChevronRight className={`ml-auto text-slate-400 transition-transform ${noticesOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            {noticesOpen && (
+              <div className="ml-6 mt-1 space-y-1">
+                {[{ id: 1, title: 'General Notice' }, { id: 2, title: 'Legal Notes' }, { id: 3, title: 'Recovering Certificate' }].map((n) => (
+                  <button
+                    key={n.id}
+                    onClick={() => {
+                      setActiveTab('NOTICES');
+                      setSelectedNoticeId(n.id);
+                      setOpenNotice(n.id);
+                      if (window.innerWidth < 768) setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left transition-colors ${selectedNoticeId === n.id ? 'bg-white/5 text-white font-semibold' : 'text-slate-400 hover:bg-white/3 hover:text-white'}`}
+                  >
+                    <span className="text-xs">•</span>
+                    <span className="truncate">{n.title}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <SidebarItem
-            icon={Bell}
-            label="Notices & Circulars"
-            tabName="NOTICES"
+            icon={Briefcase}
+            label="Assign Posting"
+            tabName="ASSIGN_POSTING"
           />
         </nav>
 
@@ -626,18 +723,243 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: OTHER TABS (Placeholder) */}
-          {['BONDS', 'NOTICES', 'POSTINGS'].includes(activeTab) && (
+          {/* TAB: NOTICES */}
+          {activeTab === 'NOTICES' && (
+            <div className="space-y-4 max-w-3xl mx-auto">
+              <h3 className="text-xl font-bold text-slate-700 mb-2">Notices & Circulars</h3>
+              {[
+                { id: 1, title: 'General Notice', body: 'General notices and circulars will appear here. Click to expand for details.' },
+                { id: 2, title: 'Legal Notes', body: 'Legal clarifications, statutory updates and notes are listed under Legal Notes.' },
+                { id: 3, title: 'Recovering Certificate', body: 'Instructions and forms for recovering certificates are available here.' },
+              ].map((n) => (
+                <div key={n.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setOpenNotice(openNotice === n.id ? null : n.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left"
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-800">{n.title}</div>
+                      <div className="text-xs text-slate-500">{n.body.split('.').slice(0,1)}.</div>
+                    </div>
+                    <ChevronRight className={`text-slate-400 transition-transform ${openNotice === n.id ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  {openNotice === n.id && (
+                    <div className="px-4 pb-4 pt-2 text-slate-600 text-sm border-t border-slate-100">
+                      <p>{n.body}</p>
+                      <p className="mt-2 text-xs text-slate-400">Last updated: Dec 2025</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+            {/* TAB: ASSIGN POSTING */}
+            {activeTab === 'ASSIGN_POSTING' && (showAssignForm || editingId || postings.length === 0) && (
+              <div className="bg-white rounded-xl shadow-sm p-6 max-w-3xl mx-auto">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-slate-700">Posting Details</h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        handleAssignCancel();
+                        setShowAssignForm(true);
+                        setActiveTab('ASSIGN_POSTING');
+                      }}
+                      className="text-sm px-3 py-1 rounded border border-slate-200"
+                    >
+                      Add New
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Posting Letter No*</label>
+                    <input
+                      value={postingLetterNo}
+                      onChange={(e) => setPostingLetterNo(e.target.value)}
+                      placeholder="Enter Posting Letter No #"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">District*</label>
+                    <input
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      placeholder="Enter district"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Tehsil*</label>
+                    <input
+                      value={tehsil}
+                      onChange={(e) => setTehsil(e.target.value)}
+                      placeholder="Enter tehsil"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Hospital*</label>
+                    <input
+                      value={hospital}
+                      onChange={(e) => setHospital(e.target.value)}
+                      placeholder="Enter hospital"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Issue Date*</label>
+                    <input
+                      type="date"
+                      value={issueDate}
+                      onChange={(e) => setIssueDate(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Joining Letter No*</label>
+                    <input
+                      value={joiningLetterNo}
+                      onChange={(e) => setJoiningLetterNo(e.target.value)}
+                      placeholder="Enter Joining Letter No #"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-4">
+                  <button
+                    onClick={() => setBondNotCompleted(!bondNotCompleted)}
+                    className={`px-3 py-1 rounded ${bondNotCompleted ? 'bg-rose-700 text-white' : 'bg-slate-100 text-slate-700'}`}
+                  >
+                    {bondNotCompleted ? 'Bond Not Completed' : 'Bond Completed'}
+                  </button>
+                </div>
+
+                <div className="mt-6 border-t pt-4">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Notice Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Letter No.</label>
+                      <input
+                        value={noticeLetterNo}
+                        onChange={(e) => setNoticeLetterNo(e.target.value)}
+                        placeholder="Enter the letter number"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-slate-600 mb-1">Date of Issue</label>
+                      <input
+                        type="date"
+                        value={noticeDate}
+                        onChange={(e) => setNoticeDate(e.target.value)}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button onClick={handleAssignCancel} className="px-4 py-2 rounded border border-slate-300 text-slate-700">Cancel</button>
+                  <button onClick={handleAssignSave} className={`px-4 py-2 rounded ${themeColor} text-white`}>Save</button>
+                </div>
+              </div>
+            )}
+
+            {/* Saved Postings List */}
+            {activeTab === 'ASSIGN_POSTING' && !showAssignForm && postings.length > 0 && (
+              <div className="mt-6 max-w-3xl mx-auto space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-semibold text-slate-700">Saved Postings</h4>
+                  <button
+                    onClick={() => {
+                      handleAssignCancel();
+                      setShowAssignForm(true);
+                    }}
+                    className="text-sm px-3 py-1 rounded bg-emerald-600 text-white"
+                  >
+                    + Add New
+                  </button>
+                </div>
+                {postings.map((p) => (
+                  <div key={p.id} className="bg-white border border-slate-200 rounded-lg p-3 flex items-start justify-between">
+                    <div>
+                      <div className="font-semibold text-slate-800">{p.postingLetterNo || '—'} • {p.district || '—'}</div>
+                      <div className="text-sm text-slate-500">{p.hospital || ''} {p.startDate ? `• ${p.startDate}` : ''}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          // load into form for editing
+                          setEditingId(p.id);
+                          setPostingLetterNo(p.postingLetterNo || '');
+                          setDistrict(p.district || '');
+                          setTehsil(p.tehsil || '');
+                          setHospital(p.hospital || '');
+                          setIssueDate(p.issueDate || '');
+                          setJoiningLetterNo(p.joiningLetterNo || '');
+                          setStartDate(p.startDate || '');
+                          setEndDate(p.endDate || '');
+                          setBondNotCompleted(!!p.bondNotCompleted);
+                          setNoticeLetterNo(p.noticeLetterNo || '');
+                          setNoticeDate(p.noticeDate || '');
+                          setShowAssignForm(true);
+                        }}
+                        className="px-3 py-1 text-sm rounded border border-slate-200"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setPostings((prev) => prev.filter((x) => x.id !== p.id))}
+                        className="px-3 py-1 text-sm rounded border border-rose-200 text-rose-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          {/* Other placeholder tabs */}
+          {['BONDS', 'POSTINGS'].includes(activeTab) && (
             <div className="flex flex-col items-center justify-center h-96 bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center">
               <div className="bg-slate-50 p-6 rounded-full mb-4">
                 <Briefcase size={48} className="text-slate-300" />
               </div>
-              <h3 className="text-xl font-bold text-slate-700">
-                Module Under Development
-              </h3>
-              <p className="text-slate-500 max-w-sm mt-2">
-                The {activeTab.toLowerCase()} module is currently being built.
-              </p>
+              <h3 className="text-xl font-bold text-slate-700">Module Under Development</h3>
+              <p className="text-slate-500 max-w-sm mt-2">The {activeTab.toLowerCase()} module is currently being built.</p>
             </div>
           )}
         </main>
