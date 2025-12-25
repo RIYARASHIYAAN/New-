@@ -106,7 +106,25 @@ export default function App() {
   const [bondNotCompleted, setBondNotCompleted] = useState(true);
   const [noticeLetterNo, setNoticeLetterNo] = useState('');
   const [noticeDate, setNoticeDate] = useState('');
-  const [postings, setPostings] = useState([]);
+  const [postings, setPostings] = useState([
+    {
+      id: 1,
+      student: { name: 'Rahul Kumar', batch: '2019' },
+      batch: '2019',
+      district: 'Bhopal',
+      hospital: 'GMC Bhopal',
+      status: 'Bounded',
+    },
+    {
+      id: 2,
+      student: { name: 'Priya Singh', batch: '2020' },
+      batch: '2020',
+      district: 'Indore',
+      hospital: 'GMC Indore',
+      status: 'Bounded',
+    },
+  ]);
+    const [verifyStatus, setVerifyStatus] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -337,30 +355,52 @@ export default function App() {
                     {activeTab === 'VIEW_POSTING' && (
                       <div className="mt-8">
                         <h3 className="text-lg font-bold mb-4">View Posting Details</h3>
-                        <table className="w-full text-left text-sm bg-white rounded shadow border">
-                          <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-                            <tr>
-                              <th className="px-4 py-2">Student Name</th>
-                              <th className="px-4 py-2">Batch</th>
-                              <th className="px-4 py-2">Student Status</th>
-                              <th className="px-4 py-2">District</th>
-                              <th className="px-4 py-2">Hospital</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {postings.map((p) => (
-                              <tr key={p.id}>
-                                <td className="px-4 py-2">{p.student?.name || ''}</td>
-                                <td className="px-4 py-2">{p.batch || p.student?.batch || ''}</td>
-                                <td className="px-4 py-2">Bounded</td>
-                                <td className="px-4 py-2">{p.district}</td>
-                                <td className="px-4 py-2">{p.hospital}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        <div className="text-slate-500 text-center py-8">No posting details to show here. Please check DGH Verify Postings.</div>
                       </div>
                     )}
+                              {activeTab === 'VERIFY_POSTINGS' && (
+                                <div className="mt-8">
+                                  <h3 className="text-lg font-bold mb-4">Verify Postings</h3>
+                                  <table className="w-full text-left text-sm bg-white rounded shadow border">
+                                    <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
+                                      <tr>
+                                        <th className="px-4 py-2">Student Name</th>
+                                        <th className="px-4 py-2">Batch</th>
+                                        <th className="px-4 py-2">Student Status</th>
+                                        <th className="px-4 py-2">District</th>
+                                        <th className="px-4 py-2">Hospital</th>
+                                          <th className="px-4 py-2">Actions</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {postings.map((p) => (
+                                        <tr key={p.id}>
+                                          <td className="px-4 py-2">{p.student?.name || ''}</td>
+                                          <td className="px-4 py-2">{p.batch || p.student?.batch || ''}</td>
+                                          <td className="px-4 py-2">Bounded</td>
+                                          <td className="px-4 py-2">{p.district}</td>
+                                          <td className="px-4 py-2">{p.hospital}</td>
+                                            <td className="px-4 py-2 flex gap-2">
+                                              <button
+                                                className="px-3 py-1 rounded bg-green-600 text-white text-xs font-semibold hover:bg-green-700"
+                                                onClick={() => setVerifyStatus((prev) => ({ ...prev, [p.id]: 'verified' }))}
+                                              >Verify</button>
+                                              <button
+                                                className="px-3 py-1 rounded bg-red-600 text-white text-xs font-semibold hover:bg-red-700"
+                                                onClick={() => setVerifyStatus((prev) => ({ ...prev, [p.id]: 'rejected' }))}
+                                              >Reject</button>
+                                            </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                    {Object.entries(verifyStatus).map(([id, status]) => (
+                                      <div key={id} className={`mt-4 text-lg font-bold ${status === 'verified' ? 'text-green-600' : 'text-red-600'}`}>
+                                        Request for student ID {id} {status === 'verified' ? 'verified' : 'rejected'}.
+                                      </div>
+                                    ))}
+                                </div>
+                              )}
           {activeTab === 'NOTICES' && (
             <Notices openNotice={openNotice} setOpenNotice={setOpenNotice} />
           )}
